@@ -1,0 +1,91 @@
+name: 'Generate Image Tag'
+description: 'Generates an image tag based on the provided inputs.'
+author: 'Kairos'
+inputs:
+  base_image:
+    description: 'The base image name.'
+    required: true
+    type: string
+  variant:
+    description: 'The variant of the image.'
+    required: true
+    type: string
+  arch:
+    description: 'The architecture of the image.'
+    required: true
+    type: string
+  model:
+    description: 'The model of the image.'
+    required: false
+    type: string
+    default: 'generic'
+  kubernetes_distro:
+    description: 'The Kubernetes distribution.'
+    required: false
+    type: string
+  trusted_boot:
+    required: false
+    type: string
+    default: "false"
+  event_type:
+    required: true
+    type: string
+outputs:
+  image_tag:
+    description: 'The generated image tag.'
+    value: ${{ steps.generate_tag.outputs.IMAGE_NAME }}
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Generate Image Tag'
+      id: generate_tag
+      run: |
+        # All of this becuase opensuse/leap:15.6 has to be pushed to the opensuse repo instead of having opensuse-leap and opensuse-tumbleweed...
+        base_image=$(echo "${{ inputs.base_image }}" | cut -d ':' -f 1)
+        tag=$(echo "${{ inputs.base_image }}" | cut -d ':' -f 2 || echo 'latest')
+
+        # Check if the base image contains a slash
+        if [[ "$base_image" == *"/"* ]]; then
+          # Split the base image into distro and sub-distro
+          distro=$(echo "$base_image" | cut -d '/' -f 1)
+          sub_distro=$(echo "$base_image" | cut -d '/' -f 2)
+          # Combine sub-distro and tag
+          tag="$sub_distro-$tag"
+        else
+          # Use the base image as the distro
+          distro="$base_image"
+        fi
+
+        # Special case for nvidia as we build 2 different images and the base_image is our cached image
+        # TODO: Add support for nvidia-jetson-agx-orin in kairos-init so we can build it properly
+        if [[ "${{ inputs.model }}" == "nvidia-jetson-agx-orin" ]]; then
+          distro="ubuntu"
+          tag="22.04"
+        fi
+        
+        echo "flavor=$distro" >> $GITHUB_OUTPUT
+        echo "flavor_release=$tag" >> $GITHUB_OUTPUT
+        
+        IMAGE_NAME="$distro-$tag-${{ inputs.variant }}-${{ inputs.arch }}-${{ inputs.model }}"
+        # Add kubernetes_distro and kubernetes_version if they are set
+        if [[ -n "${{ inputs.kubernetes_distro }}" ]]; then
+         IMAGE_NAME+="-${{ inputs.kubernetes_distro }}"
+        fi
+        if [[ -n "${{ inputs.kubernetes_version }}" ]]; then
+         IMAGE_NAME+="-${{ inputs.kubernetes_version }}"
+        fi
+        
+        # Add ${{ github.ref_name }} if its a tag, otherwise add ${{ github.sha }}
+        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_name }}" != "" ]]; then
+         IMAGE_NAME+="-${{ github.ref_name }}"
+        else
+         IMAGE_NAME+="-${{ github.sha }}"
+        fi
+        
+        # Add uki if it is set to true
+        if [[ "${{ inputs.trusted_boot }}" == "true" ]]; then
+         IMAGE_NAME+="-uki"
+        fi
+        echo "image_tag=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+        echo "Generated image tag: $IMAGE_NAME"
+      shell: bash

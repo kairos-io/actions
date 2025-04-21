@@ -1,0 +1,11 @@
+name: 'Kairos actions: Stub'
+description: "Stub: Don't use this action directly."
+author: 'Kairos'
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Stub'
+      run: |
+        echo 'This is a stub.'
+        exit 1
+      shell: bash
