@@ -30,6 +30,9 @@ inputs:
   event_type:
     required: true
     type: string
+  event_ref:
+    required: true
+    type: string
 outputs:
   image_tag:
     description: 'The generated image tag.'
@@ -75,9 +78,13 @@ runs:
          IMAGE_NAME+="-${{ inputs.kubernetes_version }}"
         fi
         
+        echo "Debugging GitHub Context:"
+        echo "Event Name: ${{ inputs.event_type }}"
+        echo "Ref Name: ${{ inputs.event_ref }}"
+        
         # Add ${{ github.ref_name }} if its a tag, otherwise add ${{ github.sha }}
-        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref_name }}" == v* ]]; then
-         IMAGE_NAME+="-${{ github.ref_name }}"
+        if [[ "${{ inputs.event_type }}" == "push" && "${{ inputs.event_ref }}" == v* ]]; then
+         IMAGE_NAME+="-${{ inputs.event_ref }}"
         else
          IMAGE_NAME+="-${{ github.sha }}"
         fi

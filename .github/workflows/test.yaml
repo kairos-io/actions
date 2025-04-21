@@ -19,13 +19,15 @@ jobs:
             kubernetes_distro: 'k3s'
             trusted_boot: 'true'
             event_type: 'push'
-            ref_name: 'v1.0.0'
+            event_ref: 'v1.0.0'
           - base_image: 'alpine:3.18'
             variant: 'core'
             arch: 'arm64'
             model: 'generic'
             kubernetes_distro: 'k0s'
             trusted_boot: 'false'
+            event_type: 'push'
+            event_ref: 'main'
           - base_image: 'debian:11'
             variant: 'standard'
             arch: 'amd64'
@@ -47,18 +49,10 @@ jobs:
             kubernetes_distro: ''
             trusted_boot: 'false'
             event_type: 'pull_request'
-
+            event_ref: 'refs/pull/123/merge'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Simulate Event
-        run: |
-          echo "Simulating event: ${{ matrix.variation.event_type }}"
-          echo "GITHUB_EVENT_NAME=${{ matrix.variation.event_type }}" >> $GITHUB_ENV
-          if [[ "${{ matrix.variation.event_type }}" == "push" ]]; then
-            echo "GITHUB_REF_NAME=${{ matrix.variation.ref_name }}" >> $GITHUB_ENV
-          fi
       - name: Generate Image Tag
         id: generate_tag
         uses: ./imageTag
@@ -70,7 +64,7 @@ jobs:
           kubernetes_distro: ${{ matrix.variation.kubernetes_distro }}
           trusted_boot: ${{ matrix.variation.trusted_boot }}
           event_type: ${{ matrix.variation.event_type }}
-
+          event_ref: ${{ matrix.variation.event_ref }}
       - name: Validate Image Tag Output
         run: |
           echo "Generated Image Tag: ${{ steps.generate_tag.outputs.image_tag }}"
@@ -87,12 +81,12 @@ jobs:
             fi
           fi
           # Validate ref_name logic
-          if [[ "${{ matrix.variation.event_type }}" == "push" && "${{ matrix.variation.ref_name }}" == v* ]]; then
-            if [[ "${{ steps.generate_tag.outputs.image_tag }}" != *"${{ matrix.variation.ref_name }}"* ]]; then
-              echo "Error: Image tag does not contain the ref_name '${{ matrix.variation.ref_name }}'!"
+          if [[ "${{ matrix.variation.event_type }}" == "push" && "${{ matrix.variation.event_ref }}" == v* ]]; then
+            if [[ "${{ steps.generate_tag.outputs.image_tag }}" != *"${{ matrix.variation.event_ref }}"* ]]; then
+              echo "Error: Image tag does not contain the ref_name '${{ matrix.variation.event_ref }}'!"
               exit 1
             fi
-          elif [[ "${{ matrix.variation.event_type }}" == "push" && "${{ matrix.variation.ref_name }}" != v* ]]; then
+          elif [[ "${{ matrix.variation.event_type }}" == "push" && "${{ matrix.variation.event_ref }}" != v* ]]; then
             if [[ "${{ steps.generate_tag.outputs.image_tag }}" != *"${{ github.sha }}"* ]]; then
               echo "Error: Image tag does not contain the github.sha '${{ github.sha }}' when ref_name does not match 'v*'!"
               exit 1
