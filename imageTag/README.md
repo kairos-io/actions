@@ -4,16 +4,17 @@ This GitHub Action generates an image tag based on the provided inputs. It is de
 
 ## Inputs
 
-| Name                | Description                                           | Required | Default   |
-|---------------------|-------------------------------------------------------|----------|-----------|
-| `base_image`        | The base image name.                                  | Yes      |           |
-| `variant`           | The variant of the image.                             | Yes      |           |
-| `arch`              | The architecture of the image.                        | Yes      |           |
-| `model`             | The model of the image.                               | No       | `generic` |
-| `kubernetes_distro` | The Kubernetes distribution.                          | No       |           |
-| `trusted_boot`      | Whether trusted boot is enabled (`true`/`false`).     | No       | `false`   |
-| `event_type`        | The GitHub event type (e.g., `push`, `pull_request`). | Yes      |           |
-| `event_ref`         | The Git reference (e.g., branch name, tag).           | Yes      |           |
+| Name                 | Description                                           | Required | Default   |
+|----------------------|-------------------------------------------------------|----------|-----------|
+| `base_image`         | The base image name.                                  | Yes      |           |
+| `variant`            | The variant of the image.                             | Yes      | `core`    |
+| `arch`               | The architecture of the image.                        | Yes      |           |
+| `model`              | The model of the image.                               | No       | `generic` |
+| `kubernetes_distro`  | The Kubernetes distribution.                          | No       |           |
+| `kubernetes_version` | The Kubernetes version.                               | No       |           |
+| `trusted_boot`       | Whether trusted boot is enabled (`true`/`false`).     | No       | `false`   |
+| `event_type`         | The GitHub event type (e.g., `push`, `pull_request`). | Yes      |           |
+| `event_ref`          | The Git reference (e.g., branch name, tag).           | Yes      |           |
 
 ## Outputs
 

@@ -8,8 +8,9 @@ inputs:
     type: string
   variant:
     description: 'The variant of the image.'
-    required: true
+    required: false
     type: string
+    default: 'core'
   arch:
     description: 'The architecture of the image.'
     required: true
