@@ -33,7 +33,7 @@ inputs:
 outputs:
   image_tag:
     description: 'The generated image tag.'
-    value: ${{ steps.generate_tag.outputs.IMAGE_NAME }}
+    value: ${{ steps.generate_tag.outputs.image_tag }}
 runs:
   using: 'composite'
   steps:

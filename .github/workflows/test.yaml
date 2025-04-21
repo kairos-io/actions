@@ -1,0 +1,69 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variation:
+          - base_image: 'ubuntu:22.04'
+            variant: 'minimal'
+            arch: 'amd64'
+            model: 'generic'
+            kubernetes_distro: 'k3s'
+            trusted_boot: 'true'
+          - base_image: 'alpine:3.18'
+            variant: 'full'
+            arch: 'arm64'
+            model: 'custom'
+            kubernetes_distro: 'k8s'
+            trusted_boot: 'false'
+          - base_image: 'debian:11'
+            variant: 'slim'
+            arch: 'amd64'
+            model: 'generic'
+            kubernetes_distro: ''
+            trusted_boot: 'true'
+          - base_image: 'opensuse/leap:15.6'
+            variant: 'standard'
+            arch: 'x86_64'
+            model: 'generic'
+            kubernetes_distro: ''
+            trusted_boot: 'false'
+          - base_image: 'nvidia/cuda:11.8.0-base-ubuntu22.04'
+            variant: 'gpu'
+            arch: 'arm64'
+            model: 'nvidia-jetson-agx-orin'
+            kubernetes_distro: ''
+            trusted_boot: 'false'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Generate Image Tag
+        id: generate_tag
+        uses: ./imageTag
+        with:
+          base_image: ${{ matrix.variation.base_image }}
+          variant: ${{ matrix.variation.variant }}
+          arch: ${{ matrix.variation.arch }}
+          model: ${{ matrix.variation.model }}
+          kubernetes_distro: ${{ matrix.variation.kubernetes_distro }}
+          trusted_boot: ${{ matrix.variation.trusted_boot }}
+          event_type: 'push'
+
+      - name: Validate Image Tag Output
+        run: |
+          echo "Generated Image Tag: ${{ steps.generate_tag.outputs.image_tag }}"
+          # Add validation logic here if needed
+          if [[ -z "${{ steps.generate_tag.outputs.image_tag }}" ]]; then
+            echo "Error: Image tag output is empty!"
+            exit 1
+          fi
